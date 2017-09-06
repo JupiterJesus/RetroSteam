@@ -1,0 +1,60 @@
+﻿Don't start unless steam is OFF. Periodically check for steam during various operations that require file reading or modification.
+Read app configuration
+	Various default settings
+	???
+	Include anything I can think of here
+	Default rom path
+	Default image path
+	Default rom regex
+	Default emulator config file
+ Read command line arguments
+	Command line arguments override config file options
+ Read emulator configuration
+	Decide on format - INI, XML, JSON, other?
+	List of "emulator" objects
+		Steam category
+		Exe path - E:\Emulation\...\cemu\Cemu.exe
+		Exe parameters - -f -g "%R"
+			Substitutions include...
+			%E for exe (including path)
+			%F for exe (without path)
+			%f for exe (without path or extension)
+			%L for emulator directory (without exe file)
+			%P for rom file (with full path and filename)
+			%p for rom file (with full path and filename), relative to the emulator exe!
+				I don't even know yet if I can do this, but it would be nice if the code could automatically
+				calculate the path of the rom relative to the exe,  using "..\" as necessary
+			%R for rom path, relative to base dir, same as %r if there are no subfolders
+			%r for rom filename, no path
+			%n for rom filename, no path or extension
+			%D for rom directory (without rom file)
+			%B for rom base path (from configuration)
+			%T for rom name (parsed from rom file using regex & used as shortcut name)
+			%C for steam category
+			%I for image path (not useable in the definition of image path, of course)
+		Rom base path - E:\Emulation\...\wii-u\roms
+		Rom regex - regex that tells me how to find roms within the base rom path
+			Include a single () grouping to recognize name of rom, otherwise will default to base filename
+		Something about parsing images
+			Option for image path, using substitutions above, used to find a steam cover image
+			I believe this may be stored in the directory called "grid" in steam user config
+			Possibly allow this to use a web resource to find images, but for now just use basic URIs
+Read steam shortcuts
+	Back up shortcuts vdf file, in case something goes wrong
+	Load up all shortcuts that match an emulator configuration's category
+		For each of those, parse the shortcut and put it in the list of shortcuts for that emulator/category
+	Also load unrelated shortcuts for writing back out to file, but no need to parse - just save for later
+Analyze roms and create shortcuts
+	For each emulator
+		If shortcut category exists, otherwise create it and add to parsed shortcut categories read in earlier
+		Get rom base path and regex, then do a regex file match.
+		This results in a list of matching files.
+		For each file found
+			Create a new shortcut
+			Parse game name, using either the grouping regex operator, if supplied in rom regex, or the rom base file without extension otherwise
+			Name the shortcut after the parsed game name
+			Assign the emulator's full path + exe to the steam shortcut Target
+			Assign emulator's parameters, with substitution identifiers replaced by relevant data, to shortcut's launch options
+			Assign image using image path, also with substitutions identifiers replaced with data
+At this point, we have a list of all shortcuts, both already existing and newly parsed
+Write back to the vdf shortcut file, first all of the non-emulator shortcuts, then the emulator shortcuts
