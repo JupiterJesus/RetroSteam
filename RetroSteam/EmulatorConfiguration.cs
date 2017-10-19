@@ -40,6 +40,7 @@ namespace RetroSteam
                         case "ImageBasePath": emu.ImageBasePath = key.Value;  break;
                         case "ImageFile":     emu.ImageFile = key.Value; break;
                         case "ImageRegex":    emu.ImageRegex = key.Value; break;
+                        case "TitlePattern":   emu.TitlePattern = key.Value; break;
                         default: break;
                     }
                 }

@@ -91,7 +91,7 @@ namespace RetroSteam
             if (romPath != null)
                 result = result.Replace("%P", romPath); // %P - full rom path and filename
 
-                    return result;
+            return result;
         }
 
         /// <summary>
