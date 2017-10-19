@@ -43,6 +43,16 @@ namespace RetroSteam.Steam
             return GetShortcutsFile(GetSteamLocation(), user);
         }
 
+        /// <summary>
+        /// Gets the grid subfolder of userdata \ config file for a specific user ID in the registry-derived Steam installation folder.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        internal static string GetGridFolder(string user)
+        {
+            return GetGridFolder(GetSteamLocation(), user);
+        }
+
         /// <summary
         /// Gets the "userdata" folder from the specified Steam installation.
         /// </summary>
@@ -62,6 +72,19 @@ namespace RetroSteam.Steam
         private static string GetUserFolder(string steamBase, string user)
         {
             return steamBase + Path.DirectorySeparatorChar + "userdata" + Path.DirectorySeparatorChar + user;
+        }
+
+        /// <summary>
+        /// Gets the grid subfolder of userdata/config for a specific user from the specified Steam installation.
+        /// </summary>
+        /// <param name="steamBase"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        private static string GetGridFolder(string steamBase, string user)
+        {
+            string userData = GetUserFolder(steamBase, user);
+            string config = userData + Path.DirectorySeparatorChar + "config";
+            return config + Path.DirectorySeparatorChar + "grid";
         }
 
         /// <summary>
@@ -122,15 +145,30 @@ namespace RetroSteam.Steam
 
         internal static SteamShortcuts LoadShortcuts(string shortcutsFile)
         {
-            SteamShortcutsParser parser = new SteamShortcutsParser();
-            SteamShortcuts shortcuts = parser.Parse(shortcutsFile);
+            SteamShortcuts shortcuts = SteamShortcuts.Parse(shortcutsFile);
             return shortcuts;
         }
 
-        internal static void WriteShortcuts(SteamShortcuts shortcuts)
+        internal static void WriteShortcuts(SteamShortcuts shortcuts, string shortcutsFile)
         {
-            // TODO: Implement WriteShortcuts
-            return;
+            // TODO MAKE A BACKUP OF THE OUTPUT FILE
+            Stream o = File.Open(shortcutsFile, FileMode.Create);
+            if (shortcuts != null)
+                shortcuts.Save(o);
+        }
+
+        internal static void PrintShortcuts(SteamShortcuts shortcuts)
+        {
+            Stream o = Console.OpenStandardOutput();
+            if (shortcuts != null)
+                shortcuts.Print(o);
+        }
+
+        internal static void AddGridImage(string user, string gridImage, string steamID)
+        {
+            String gridFolder = GetGridFolder(user);
+            String newImage = gridFolder + Path.DirectorySeparatorChar + steamID;
+            File.Copy(gridImage, newImage);
         }
     }
 }
