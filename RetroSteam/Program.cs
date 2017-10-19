@@ -12,17 +12,6 @@ namespace RetroSteam
     class Program
     {
         /// <summary>
-        /// Holds application config, always config.ini
-        /// </summary>
-        private const string configFile = "config.ini";
-
-        /// <summary>
-        /// Holds emulator config. Has a default value, but otherwise comes from command line.
-        /// May also come from GUI, if and when I implement that.
-        /// </summary>
-        private static string emulatorsFile = "emulators.ini";
-
-        /// <summary>
         /// This is main. Duh. This comment exists as a joke.
         /// </summary>
         /// <param name="args">Args are args</param>
@@ -35,59 +24,74 @@ namespace RetroSteam
                 return;
             }
 
-            // Read configuration file, or get a new default configuration if no file exists
-            AppConfiguration config = ParseConfig(configFile);
-
             // Parse args. All CLI args override the configuration loaded from the file
-            ParseArgs(args, config);
+            Options o = ParseArgs(args);
+
+            // Read configuration file, or get a new default configuration if no file exists
+            AppConfiguration config = ParseConfig(o.ConfigFile, o);
 
             // Get the emulator configuration
-            EmulatorConfiguration emulators = ParseEmulators(emulatorsFile, config);
+            EmulatorConfiguration emulators = ParseEmulators(config, o);
             if (emulators == null)
             {
                 // Error out?
-                Console.Error.WriteLine("Couldn't read emulator configuration from file " + emulatorsFile);
+                Console.Error.WriteLine("Couldn't read emulator configuration from file " + o.EmulatorsFile);
                 return;
             }
 
-            // Load Steam shortcuts. SteamTools will worry about where the file is and how to read it
-            string steamBase = SteamTools.GetSteamLocation();
-            if (steamBase == null)
+            string shortcutsFile = o.ShortcutsFile;
+            if (String.IsNullOrWhiteSpace(shortcutsFile))
             {
-                Console.Error.WriteLine("No Steam installation found.");
-                return;
-            }
-            Console.WriteLine($"Found Steam installed at '{steamBase}'", steamBase);
+                // Load Steam shortcuts. SteamTools will worry about where the file is and how to read it
+                string steamBase = SteamTools.GetSteamLocation();
+                if (steamBase == null)
+                {
+                    Console.Error.WriteLine("No Steam installation found.");
+                    return;
+                }
+                Console.WriteLine($"Found Steam installed at '{steamBase}'", steamBase);
 
-            string[] users = SteamTools.GetUsers(steamBase);
-            if (users.Length == 0)
-            {
-                Console.Error.WriteLine("No Steam users found.");
-                return;
-            }
-            else if (users.Length > 1)
-            {
-                Console.Error.WriteLine("More than 1 Steam user found, handling this is not yet implemented...");
-                return;
-            }
-            else
-            {
-                string user = users[0];
+                string[] users = SteamTools.GetUsers(steamBase);
+                string user = null;
+                if (users.Length == 0)
+                {
+                    Console.Error.WriteLine("No Steam users found.");
+                    return;
+                }
+                else if (users.Length > 1)
+                {
+                    if (!string.IsNullOrWhiteSpace(o.SteamUser))
+                    {
+
+                        user = o.SteamUser;
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine("More than 1 Steam user found and no Steam User found in command line options, quitting...");
+                        return;
+                    }
+                }
+                else
+                {
+                    user = users[0];
+                }
 
                 Console.WriteLine($"Using Steam user '{user}'", user);
 
-                string shortcutsFile = SteamTools.GetShortcutsFile(steamBase, user);
-
-                Console.WriteLine($"Loading Steam shortcuts file '{shortcutsFile}'", shortcutsFile);
-
-                SteamShortcuts shortcuts = SteamTools.LoadShortcuts(shortcutsFile);
-
-                // Analyze all emulator configs, read matching roms, create new shortcuts for each rom
-                GenerateSteamShortcutsFromRoms(emulators, shortcuts);
-
-                // Write the steam shortcuts back to the file
-                SteamTools.WriteShortcuts(shortcuts);
+                shortcutsFile = SteamTools.GetShortcutsFile(steamBase, user);
             }
+            Console.WriteLine($"Loading Steam shortcuts file '{shortcutsFile}'", shortcutsFile);
+
+            SteamShortcuts shortcuts = SteamTools.LoadShortcuts(shortcutsFile);
+
+            // Analyze all emulator configs, read matching roms, create new shortcuts for each rom
+            GenerateSteamShortcutsFromRoms(emulators, shortcuts);
+
+            // Write the steam shortcuts back to the file
+            if (o.DryRun)
+                SteamTools.PrintShortcuts(shortcuts);
+            else
+                SteamTools.WriteShortcuts(shortcuts, shortcutsFile);
         }
 
         /// <summary>
@@ -126,9 +130,10 @@ namespace RetroSteam
             
             foreach (string romPath in files)
             {
-                string romName = emulator.ParseRomTitle(romPath);
-                SteamShortcut scut = GenerateSteamShortcutFromRom(emulator, romPath, romName);
+                //string romName = emulator.ParseRomTitle(romPath);
+                SteamShortcut scut = GenerateSteamShortcutFromRom(emulator, romPath);
                 shortcuts.AddShortcut(scut);
+                SteamTools.AddGridImage(scut.GridImage, scut.SteamID);
             }
         }
 
@@ -138,8 +143,9 @@ namespace RetroSteam
         /// <param name="emulator"></param>
         /// <param name="romPath"></param>
         /// <param name="romName"></param>
-        private static SteamShortcut GenerateSteamShortcutFromRom(Emulator emulator, string romPath, string romName)
+        private static SteamShortcut GenerateSteamShortcutFromRom(Emulator emulator, string romPath)
         {
+            string romName = emulator.ExpandTitle(romPath);
             string parameters = emulator.ExpandParameters(romPath, romName);
 
             string imageBasePath = emulator.ExpandImageBasePath(romPath, romName);
@@ -149,7 +155,7 @@ namespace RetroSteam
 
             //Console.WriteLine("[" + emulator.Category + "]\nEXE:\t" + emulator.Executable + "\nSTART:\t" + emulator.StartIn + "\nTITLE:\t" + romName + "\nPARAM:\t" + parameters + "\nIMAGE:\t" + imagePath);
 
-            return SteamShortcuts.GenerateShortcut(emulator.Category, romName, emulator.Executable, emulator.StartIn, parameters, imagePath, null);
+            return SteamShortcuts.GenerateShortcut(emulator.Category, romName, emulator.Executable, emulator.StartIn, parameters, imagePath);
         }
 
         /// <summary>
@@ -212,11 +218,11 @@ namespace RetroSteam
         /// </summary>
         /// <param name="emulatorsFilename"></param>
         /// <returns></returns>
-        private static EmulatorConfiguration ParseEmulators(string emulatorsFilename, AppConfiguration config)
+        private static EmulatorConfiguration ParseEmulators(AppConfiguration config, Options options)
         {
-            if (File.Exists(emulatorsFilename))
+            if (File.Exists(options.EmulatorsFile))
             {
-                return EmulatorConfiguration.Parse(emulatorsFilename, config);
+                return EmulatorConfiguration.Parse(options.EmulatorsFile, config);
             }
             else
             {
@@ -229,17 +235,20 @@ namespace RetroSteam
         /// </summary>
         /// <param name="configFilename"></param>
         /// <returns></returns>
-        private static AppConfiguration ParseConfig(string configFilename)
+        private static AppConfiguration ParseConfig(string configFilename, Options cli)
         {
+            AppConfiguration config;
             if (File.Exists(configFilename))
             {
-                return AppConfiguration.Parse(configFile);
+                config = AppConfiguration.Parse(configFilename);
             }
             else
             {
-                AppConfiguration config = AppConfiguration.GetDefault();
+                config = AppConfiguration.GetDefault();
                 return config;
             }
+            
+            return config;
         }
 
         /// <summary>
@@ -247,9 +256,14 @@ namespace RetroSteam
         /// </summary>
         /// <param name="args"></param>
         /// <param name="config"></param>
-        private static void ParseArgs(string[] args, AppConfiguration config)
+        private static Options ParseArgs(string[] args)
         {
-
+            var options = new Options();
+            var isValid = CommandLine.Parser.Default.ParseArgumentsStrict(args, options);
+            if (isValid)
+                return options;
+            else
+                return null;
         }
     }
 }
