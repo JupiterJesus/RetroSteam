@@ -16,6 +16,7 @@ namespace RetroSteam
         public string ImageFile { get; internal set; }
         public string RomBasePath { get; internal set; }
         public string RomRegex { get; internal set; }
+        public string TitlePattern { get; internal set; }
 
         internal Emulator()
         {
@@ -60,24 +61,37 @@ namespace RetroSteam
             return Expand(ImageFile, romPath, romTitle);
         }
 
+        internal string ExpandTitle(string romPath)
+        {
+            return Expand(TitlePattern, romPath, null);
+        }
+
         private string Expand(string str, string romPath, string romTitle)
         {
-            return str
+            string result = str
             .Replace("%E", Executable) // %E - Executable path
             .Replace("%F", Path.GetFileName(Executable)) // %F - Executable filename, no path
             .Replace("%f", Path.GetFileNameWithoutExtension(Executable)) // %f - Executable filename, no path or extension
             .Replace("%L", Path.GetDirectoryName(Executable)) // %L - Executable directory, no filename
-            .Replace("%P", romPath) // %P - full rom path and filename
             .Replace("%p", GetRelativePath(romPath, Path.GetDirectoryName(Executable))) // %p - rom's path relative to exe, using ../ as necessary
             .Replace("%R", GetRelativePath(romPath, RomBasePath)) // %R - Rom's path relative to the RomBasePath. Same as %r if there are no subfolders in RomBasePath
             .Replace("%r", Path.GetFileName(romPath)) // %r - Rom's filename, no path at all
             .Replace("%n", Path.GetFileNameWithoutExtension(romPath)) // %n - Rom's filename without extension
             .Replace("%D", Path.GetDirectoryName(romPath)) // %D - Rom's directory. Same as RomBasePath if there are no subfolders
             .Replace("%B", RomBasePath) // %B - RomBasePath, from the emu config
-            .Replace("%T", romTitle) // %T - Rom Title, parsed from RomRegex if a group is included to capture the title from the filename. Default is the same as %n.
             .Replace("%C", Category) // %C - Category, from the emu config
             // %I - Image path. Probably won't do this one
             ;
+
+            // When expanding the title, don't honor requests to put a title into the title
+            if (romTitle != null)
+                result = result.Replace("%T", romTitle); // %T - Rom Title, parsed from RomRegex if a group is included to capture the title from the filename. Default is the same as %n.
+
+            // When expanding the rompath, don't honor requests to put a rompath in the rompath
+            if (romPath != null)
+                result = result.Replace("%P", romPath); // %P - full rom path and filename
+
+                    return result;
         }
 
         /// <summary>

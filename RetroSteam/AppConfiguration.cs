@@ -15,11 +15,14 @@ namespace RetroSteam
         }
 
         private const string SECTION_DEFAULTS = "Defaults";
+        private const string SECTION_OPTIONS = "Options";
 
         private const string NAME_DEFAULT_IMAGE_REGEX = "DefaultImageRegex";
         private const string NAME_DEFAULT_ROM_REGEX   = "DefaultRomRegex";
         private const string NAME_DEFAULT_IMAGE_PATH  = "DefaultImagePath";
         private const string NAME_DEFAULT_ROM_PATH    = "DefaultRomPath";
+
+        private const string NAME_OPTIONS_EMULATORS   = "EmulatorsFile";
 
         public string DefaultImagePath
         {
