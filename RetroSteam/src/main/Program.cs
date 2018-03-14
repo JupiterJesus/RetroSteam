@@ -1,13 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
-using RetroSteam.Steam;
-using Newtonsoft.Json;
 using System.Runtime.InteropServices;
+using System.Windows;
 
 namespace RetroSteam
 {
@@ -44,7 +38,24 @@ namespace RetroSteam
 
         #endregion
 
-        private Main mainPage;
+        #region GUI
+        
+        public static Application WinApp { get; private set; }
+        public static Window MainWindow { get; private set; }
+
+        static void InitializeGui()
+        {
+            WinApp = new Application();
+            WinApp.Run(MainWindow = new GuiWindow());
+        }
+
+        static void InitializeFrontend()
+        {
+            WinApp = new Application();
+            WinApp.Run(MainWindow = new FrontendWindow());
+        }
+
+        #endregion
 
         /// <summary>
         /// This is main. Duh. This comment exists as a joke.
@@ -65,15 +76,18 @@ namespace RetroSteam
             if (o.Frontend)
             {
                 HideConsole();
+                InitializeFrontend();
             }
             else if (o.Gui)
             {
                 HideConsole();
+                InitializeGui();
             }
             else
             {
                 ShowConsole();
                 ConsoleProcessor.Main(emulators, o);
+                Console.ReadKey();
             }
         }
 

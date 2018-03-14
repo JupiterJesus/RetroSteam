@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{ED653DA9-9CE4-4D34-B99C-29463BEF3684}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RetroSteam</RootNamespace>
     <AssemblyName>RetroSteam</AssemblyName>
@@ -31,6 +31,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommandLine, Version=1.9.71.2, Culture=neutral, PublicKeyToken=de6f01bd326f8c32, processorArchitecture=MSIL">
@@ -64,8 +67,11 @@
   <ItemGroup>
     <Compile Include="src\main\AppConfiguration.cs" />
     <Compile Include="src\main\console\ConsoleProcessor.cs" />
-    <Compile Include="src\main\gui\Main.xaml.cs">
-      <DependentUpon>Main.xaml</DependentUpon>
+    <Compile Include="src\main\frontend\FrontendWindow.xaml.cs">
+      <DependentUpon>FrontendWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="src\main\gui\GuiWindow.xaml.cs">
+      <DependentUpon>GuiWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="src\main\Options.cs" />
     <Compile Include="src\emu\Emulator.cs" />
@@ -96,7 +102,11 @@
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="src\main\gui\Main.xaml">
+    <Page Include="src\main\frontend\FrontendWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="src\main\gui\GuiWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

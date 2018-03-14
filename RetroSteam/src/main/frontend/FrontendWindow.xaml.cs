@@ -18,9 +18,9 @@ namespace RetroSteam
     /// <summary>
     /// Interaction logic for Main.xaml
     /// </summary>
-    public partial class Main : UserControl
+    public partial class FrontendWindow : Window
     {
-        public Main()
+        public FrontendWindow()
         {
             InitializeComponent();
         }
