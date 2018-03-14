@@ -29,12 +29,13 @@ Read app configuration
 			%n for rom filename, no path or extension
 			%D for rom directory (without rom file)
 			%B for rom base path (from configuration)
-			%T for rom name (parsed from rom file using regex & used as shortcut name)
+			%T for rom "title" (parsed from rom file using regex explicit capture - not the same as the RomTitle parameter)
 			%C for steam category
 			%I for image path (not useable in the definition of image path, of course)
 		Rom base path - E:\Emulation\...\wii-u\roms
 		Rom regex - regex that tells me how to find roms within the base rom path
 			Include a single () grouping to recognize name of rom, otherwise will default to base filename
+			What if I included a different object/parameter that determined the title instead of making it part of the rom path regex?
 		Something about parsing images
 			Option for image path, using substitutions above, used to find a steam cover image
 			I believe this may be stored in the directory called "grid" in steam user config

@@ -24,6 +24,7 @@ namespace RetroSteam
         }
 
         // TODO: Fill in the substitutions that are applicable without a rom
+        // 
         /// <summary>
         /// Expands the variables in all of the individual settings, but only the ones that 
         /// don't require a rom path, filename or title (%E, %F, %f, %L, %B, %C, %I).
@@ -41,32 +42,56 @@ namespace RetroSteam
         /// </summary>
         /// <param name="romPath"></param>
         /// <returns></returns>
-        internal string ExpandParameters(string romPath, string romTitle)
+        internal string ExpandParameters(string romPath)
         {
-            return Expand(Parameters, romPath, romTitle);
+            return Expand(Parameters, romPath);
         }
 
-        internal string ExpandImageBasePath(string romPath, string romTitle)
+        internal string ExpandImageBasePath(string romPath)
         {
-            return Expand(ImageBasePath, romPath, romTitle);
+            return Expand(ImageBasePath, romPath);
         }
 
-        internal string ExpandImageRegex(string romPath, string romTitle)
+        internal string ExpandImageRegex(string romPath)
         {
-            return Expand(ImageRegex, romPath, romTitle);
+            return Expand(ImageRegex, romPath);
         }
 
-        internal string ExpandImageFile(string romPath, string romTitle)
+        internal string ExpandImageFile(string romPath)
         {
-            return Expand(ImageFile, romPath, romTitle);
+            return Expand(ImageFile, romPath);
         }
 
         internal string ExpandTitle(string romPath)
         {
-            return Expand(TitlePattern, romPath, null);
+            return Expand(TitlePattern, romPath);
         }
 
-        private string Expand(string str, string romPath, string romTitle)
+        /// <summary>
+        /// Gets the rom title by searching for an explicit capture in the RomRegex called "title".
+        /// </summary>
+        /// <param name="romPath"></param>
+        /// <returns></returns>
+        internal string ParseRomTitle(string romPath)
+        {
+            Regex reg = new Regex(RomRegex, RegexOptions.ExplicitCapture);
+            Match m = reg.Match(romPath);
+            if (m.Success)
+            {
+                return m.Groups["title"].Value;
+            }
+            else
+                return Path.GetFileNameWithoutExtension(romPath);
+        }
+
+        /// <summary>
+        /// Expands built-in variables in a string.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="romPath"></param>
+        /// <param name="romTitle"></param>
+        /// <returns></returns>
+        private string Expand(string str, string romPath)
         {
             string result = str
             .Replace("%E", Executable) // %E - Executable path
@@ -82,10 +107,9 @@ namespace RetroSteam
             .Replace("%C", Category) // %C - Category, from the emu config
             // %I - Image path. Probably won't do this one
             ;
-
-            // When expanding the title, don't honor requests to put a title into the title
-            if (romTitle != null)
-                result = result.Replace("%T", romTitle); // %T - Rom Title, parsed from RomRegex if a group is included to capture the title from the filename. Default is the same as %n.
+            
+            string romTitle = ParseRomTitle(romPath);
+            result = result.Replace("%T", romTitle); // %T - Rom Title, parsed from RomRegex if a group is included to capture the title from the filename. Default is the same as %n.
 
             // When expanding the rompath, don't honor requests to put a rompath in the rompath
             if (romPath != null)
@@ -111,23 +135,6 @@ namespace RetroSteam
                 RomBasePath = config.DefaultRomPath;
             if (string.IsNullOrWhiteSpace(RomRegex))
                 RomRegex = config.DefaultRomRegex;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="romPath"></param>
-        /// <returns></returns>
-        internal string ParseRomTitle(string romPath)
-        {
-            Regex reg = new Regex(RomRegex, RegexOptions.ExplicitCapture);
-            Match m = reg.Match(romPath);
-            if (m.Success)
-            {
-                return m.Groups["title"].Value;
-            }
-            else
-                return Path.GetFileNameWithoutExtension(romPath);
         }
 
         /// <summary>

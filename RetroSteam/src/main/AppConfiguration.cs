@@ -24,25 +24,13 @@ namespace RetroSteam
 
         private const string NAME_OPTIONS_EMULATORS   = "EmulatorsFile";
 
-        public string DefaultImagePath
-        {
-            get { return this.data == null ? null : this.data[SECTION_DEFAULTS][NAME_DEFAULT_IMAGE_PATH]; }
-        }
+        public string DefaultImagePath => this.data?[SECTION_DEFAULTS][NAME_DEFAULT_IMAGE_PATH];
 
-        public string DefaultImageRegex
-        {
-            get { return this.data == null ? null : this.data[SECTION_DEFAULTS][NAME_DEFAULT_IMAGE_REGEX]; }
-        }
+        public string DefaultImageRegex => this.data?[SECTION_DEFAULTS][NAME_DEFAULT_IMAGE_REGEX];
 
-        public string DefaultRomPath
-        {
-            get { return this.data == null ? null : this.data[SECTION_DEFAULTS][NAME_DEFAULT_ROM_PATH]; }
-        }
+        public string DefaultRomPath => this.data?[SECTION_DEFAULTS][NAME_DEFAULT_ROM_PATH];
 
-        public string DefaultRomRegex
-        {
-            get { return this.data == null ? null : this.data[SECTION_DEFAULTS][NAME_DEFAULT_ROM_REGEX]; }
-        }
+        public string DefaultRomRegex => this.data?[SECTION_DEFAULTS][NAME_DEFAULT_ROM_REGEX];
 
         /// <summary>
         /// Loads default parameters for the app configuration.

@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 
 namespace RetroSteam.Steam
 {
@@ -10,14 +11,36 @@ namespace RetroSteam.Steam
     /// </summary>
     internal class SteamTools
     {
+        private Process process = null;
+
+        public SteamTools()
+        {
+            this.process = GetSteamProcess();
+        }
+
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
-        internal static bool IsSteamRunning()
+        internal bool IsSteamRunning()
         {
-            // TODO: IsSteamRunning
-            return false;
+            if (this.process == null)
+            {
+                this.process = GetSteamProcess();
+            }
+
+            return this.process != null;
+        }
+
+        public Process GetSteamProcess()
+        {
+            Process[] p = Process.GetProcessesByName("Steam");
+            if (p.Length > 0)
+            {
+                return p[0];
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -97,6 +120,14 @@ namespace RetroSteam.Steam
             return GetSteamLocation() + Path.DirectorySeparatorChar + "userdata" + Path.DirectorySeparatorChar + user;
         }
 
+        internal static void AddGridImages(SteamShortcuts shortcuts, string user)
+        {
+            foreach (Shortcut s in shortcuts)
+            {
+                AddGridImage(s, user);
+            }
+        }
+
         /// <summary>
         /// Gets the "userdata" folder from the registry-derived Steam installation.
         /// </summary>
@@ -149,7 +180,7 @@ namespace RetroSteam.Steam
             return shortcuts;
         }
 
-        internal static void WriteShortcuts(SteamShortcuts shortcuts, string shortcutsFile)
+        internal static void WriteSteamShortcuts(SteamShortcuts shortcuts, string shortcutsFile)
         {
             // TODO MAKE A BACKUP OF THE OUTPUT FILE
             Stream o = File.Open(shortcutsFile, FileMode.Create);
@@ -157,18 +188,21 @@ namespace RetroSteam.Steam
                 shortcuts.Save(o);
         }
 
-        internal static void PrintShortcuts(SteamShortcuts shortcuts)
+        internal static void AddGridImage(string gridImage, string steamID, string user)
         {
-            Stream o = Console.OpenStandardOutput();
-            if (shortcuts != null)
-                shortcuts.Print(o);
+            string gridFolder = GetGridFolder(user);
+            string extension = Path.GetExtension(gridImage);
+            if (!string.IsNullOrWhiteSpace(gridFolder) && !string.IsNullOrWhiteSpace(extension))
+            {
+                string newImage = gridFolder + Path.DirectorySeparatorChar + steamID + extension;
+                if (!string.IsNullOrWhiteSpace(gridImage) && File.Exists(gridImage) && Directory.Exists(gridFolder))
+                    File.Copy(gridImage, newImage);
+            }
         }
 
-        internal static void AddGridImage(string user, string gridImage, string steamID)
+        internal static void AddGridImage(Shortcut shortcut, string user)
         {
-            String gridFolder = GetGridFolder(user);
-            String newImage = gridFolder + Path.DirectorySeparatorChar + steamID;
-            File.Copy(gridImage, newImage);
+            AddGridImage(shortcut.GridImage, shortcut.ID, user);
         }
     }
 }

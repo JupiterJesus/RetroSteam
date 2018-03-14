@@ -10,7 +10,7 @@ using System.Collections.ObjectModel;
 
 namespace RetroSteam.Steam
 {
-    internal class SteamShortcuts : IEnumerable<SteamShortcut>
+    internal class SteamShortcuts : ICollection<Shortcut>
     {
         private const string SHORTCUTS_HEADER = "\0shortcuts\0";
 
@@ -24,13 +24,17 @@ namespace RetroSteam.Steam
 
         private ShortCutReplacePolicy replacementPolicy = ShortCutReplacePolicy.REPLACE;
 
-        private List<SteamShortcut> shortcuts = new List<SteamShortcut>();
+        private List<Shortcut> shortcuts = new List<Shortcut>();
+
+        public int Count => ((ICollection<Shortcut>)shortcuts).Count;
+
+        public bool IsReadOnly => ((ICollection<Shortcut>)shortcuts).IsReadOnly;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="scut"></param>
-        internal SteamShortcuts AddShortcut(SteamShortcut scut)
+        public void Add(Shortcut scut)
         {
             if (ShortCutExists(scut))
             {
@@ -48,8 +52,6 @@ namespace RetroSteam.Steam
             {
                 shortcuts.Add(scut);
             }
-
-            return this;
         }
 
         /// <summary>
@@ -57,7 +59,7 @@ namespace RetroSteam.Steam
         /// </summary>
         /// <param name="scut"></param>
         /// <returns></returns>
-        internal bool ShortCutExists(SteamShortcut scut)
+        internal bool ShortCutExists(Shortcut scut)
         {
             return shortcuts.Contains(scut);
         }
@@ -75,11 +77,10 @@ namespace RetroSteam.Steam
         /// <param name="gridImage"></param>
         /// <param name="configs"></param>
         /// <returns></returns>
-        internal static SteamShortcut GenerateShortcut(string category, string title, string target, string startIn, string launchOptions, string gridImage)
+        internal static Shortcut GenerateShortcut(string category, string title, string target, string startIn, string launchOptions, string gridImage)
         {
-            List<string> categories = new List<string>();
-            categories.Add(category);
-            SteamShortcut scut = new SteamShortcut(categories, title, target, startIn, launchOptions, gridImage, gridImage, null);
+            List<string> categories = new List<string> { category };
+            Shortcut scut = new Shortcut(categories, title, target, startIn, launchOptions, gridImage, gridImage, null);
             return scut;
         }
 
@@ -95,9 +96,9 @@ namespace RetroSteam.Steam
         /// <param name="launchOptions"></param>
         /// <param name="gridImage"></param>
         /// <returns></returns>
-        internal static SteamShortcut GenerateShortcut(List<string> categories, string title, string target, string startIn, string launchOptions, string gridImage)
+        internal static Shortcut GenerateShortcut(List<string> categories, string title, string target, string startIn, string launchOptions, string gridImage)
         {
-            SteamShortcut scut = new SteamShortcut(categories, title, target, startIn, launchOptions, gridImage, gridImage, null);
+            Shortcut scut = new Shortcut(categories, title, target, startIn, launchOptions, gridImage, gridImage, null);
             return scut;
         }
 
@@ -113,12 +114,11 @@ namespace RetroSteam.Steam
         /// <param name="launchOptions"></param>
         /// <param name="gridImage"></param>
         /// <returns></returns>
-        internal SteamShortcut GenerateAndAddShortcut(string category, string title, string target, string startIn, string launchOptions, string gridImage)
+        internal Shortcut GenerateAndAddShortcut(string category, string title, string target, string startIn, string launchOptions, string gridImage)
         {
-            List<string> categories = new List<string>();
-            categories.Add(category);
-            SteamShortcut scut = GenerateShortcut(categories, title, target, startIn, launchOptions, gridImage);
-            AddShortcut(scut);
+            List<string> categories = new List<string> { category };
+            Shortcut scut = GenerateShortcut(categories, title, target, startIn, launchOptions, gridImage);
+            Add(scut);
             return scut;
         }
 
@@ -134,21 +134,21 @@ namespace RetroSteam.Steam
         /// <param name="launchOptions"></param>
         /// <param name="gridImage"></param>
         /// <returns></returns>
-        internal SteamShortcut GenerateAndAddShortcut(List<string> categories, string title, string target, string startIn, string launchOptions, string gridImage)
+        internal Shortcut GenerateAndAddShortcut(List<string> categories, string title, string target, string startIn, string launchOptions, string gridImage)
         {
-            SteamShortcut scut = GenerateShortcut(categories, title, target, startIn, launchOptions, gridImage);
-            AddShortcut(scut);
+            Shortcut scut = GenerateShortcut(categories, title, target, startIn, launchOptions, gridImage);
+            Add(scut);
             return scut;
         }
 
-        public IEnumerator<SteamShortcut> GetEnumerator()
+        public IEnumerator<Shortcut> GetEnumerator()
         {
-            return ((IEnumerable<SteamShortcut>)shortcuts).GetEnumerator();
+            return ((IEnumerable<Shortcut>)shortcuts).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable<SteamShortcut>)shortcuts).GetEnumerator();
+            return ((IEnumerable<Shortcut>)shortcuts).GetEnumerator();
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace RetroSteam.Steam
                     MatchCollection mc = reg.Matches(fileContents);
                     foreach (Match m in mc)
                     {
-                        SteamShortcut scut = new SteamShortcut();
+                        Shortcut scut = new Shortcut();
                         string index = m.Groups[1].Value;
                         scut.Index = int.Parse(index);
                         scut.Title = m.Groups[2].Value;
@@ -201,7 +201,7 @@ namespace RetroSteam.Steam
                             scut.Categories.Add(tag);
                         }
                         // category looks like "\u0001(?<index>\d+)\0(?<tag>.*?)\0", then repeats
-                        shortcuts.AddShortcut(scut);
+                        shortcuts.Add(scut);
                     }
                 }
                 else
@@ -220,7 +220,7 @@ namespace RetroSteam.Steam
         {
             StreamWriter outfile = new StreamWriter(output, Encoding.GetEncoding(28591));
             outfile.Write("\0shortcuts\0");
-            foreach (SteamShortcut scut in shortcuts)
+            foreach (Shortcut scut in shortcuts)
             {
                 outfile.Write(string.Format("\0{0}\0\u0001appname\0{1}\0\u0001exe\0{2}\0\u0001StartDir\0{3}\0\u0001icon\0{4}\0\u0001ShortcutPath\0{5}\0\u0001LaunchOptions\0{6}\0",
                     scut.Index,
@@ -245,24 +245,24 @@ namespace RetroSteam.Steam
             outfile.Flush();
         }
 
-
-        internal void Print(Stream output)
+        public void Clear()
         {
-            StreamWriter outfile = new StreamWriter(output);
-            foreach (SteamShortcut scut in shortcuts)
-            {
-                outfile.WriteLine("      ID: {0}", scut.SteamID);
-                outfile.WriteLine("   Title: {0}", scut.Title);
-                outfile.WriteLine("  Target: {0} {1}", scut.Target, scut.LaunchOptions);
-                outfile.WriteLine("Start In: {0}", scut.StartIn);
-                outfile.WriteLine("   Icons: {0}", scut.GridImage);
-                outfile.Write("Categories: | ");
-                foreach (string cat in scut.Categories)
-                    outfile.Write(cat + " | ");
-                outfile.WriteLine("\n");
+            ((ICollection<Shortcut>)shortcuts).Clear();
+        }
 
-            }
-            outfile.Flush();
+        public bool Contains(Shortcut item)
+        {
+            return ((ICollection<Shortcut>)shortcuts).Contains(item);
+        }
+
+        public void CopyTo(Shortcut[] array, int arrayIndex)
+        {
+            ((ICollection<Shortcut>)shortcuts).CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(Shortcut item)
+        {
+            return ((ICollection<Shortcut>)shortcuts).Remove(item);
         }
     }
 }
