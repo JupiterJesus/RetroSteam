@@ -11,6 +11,9 @@ namespace RetroSteam
         public string Executable { get; internal set; }
         public string StartIn { get; internal set; }
         public string Parameters { get; internal set; }
+        public string IconBasePath { get; internal set; }
+        public string IconRegex { get; internal set; }
+        public string IconFile { get; internal set; }
         public string ImageBasePath { get; internal set; }
         public string ImageRegex { get; internal set; }
         public string ImageFile { get; internal set; }
@@ -102,12 +105,14 @@ namespace RetroSteam
             .Replace("%R", GetRelativePath(romPath, RomBasePath)) // %R - Rom's path relative to the RomBasePath. Same as %r if there are no subfolders in RomBasePath
             .Replace("%r", Path.GetFileName(romPath)) // %r - Rom's filename, no path at all
             .Replace("%n", Path.GetFileNameWithoutExtension(romPath)) // %n - Rom's filename without extension
-            .Replace("%D", Path.GetDirectoryName(romPath)) // %D - Rom's directory. Same as RomBasePath if there are no subfolders
+            .Replace("%D", GetParentDirectory(romPath)) // %D - Rom's directory, absolute path.
+            .Replace("%d", Path.GetDirectoryName(romPath)) // %d - Rom's parent directory name. Same as RomBasePath if there are no subfolders
             .Replace("%B", RomBasePath) // %B - RomBasePath, from the emu config
             .Replace("%C", Category) // %C - Category, from the emu config
             // %I - Image path. Probably won't do this one
+            // %i - Icon path. Probably won't do this one
             ;
-            
+
             string romTitle = ParseRomTitle(romPath);
             result = result.Replace("%T", romTitle); // %T - Rom Title, parsed from RomRegex if a group is included to capture the title from the filename. Default is the same as %n.
 
@@ -166,5 +171,13 @@ namespace RetroSteam
             return Uri.UnescapeDataString(relativeUri.ToString()).Replace("/", separator);
 
         }
-    }
+
+        public static string GetParentDirectory(string fullPath)
+        {
+            int index = fullPath.LastIndexOf(Path.DirectorySeparatorChar);
+            if (index < 0)
+                return fullPath;
+            else
+                return fullPath.Substring(index);
+        }
 }
