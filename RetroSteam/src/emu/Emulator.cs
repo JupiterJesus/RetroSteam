@@ -166,7 +166,7 @@ namespace RetroSteam
             Uri fullUri = new Uri(fullPath);
 
             Uri relativeUri = baseUri.MakeRelativeUri(fullUri);
-            
+
             // Uri's use forward slashes so convert back to backward slashes
             return Uri.UnescapeDataString(relativeUri.ToString()).Replace("/", separator);
 
@@ -180,4 +180,5 @@ namespace RetroSteam
             else
                 return fullPath.Substring(index);
         }
+    }
 }
