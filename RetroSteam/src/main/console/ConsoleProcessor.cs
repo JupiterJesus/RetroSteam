@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using IWshRuntimeLibrary;
 
 namespace RetroSteam
 {
@@ -85,7 +86,7 @@ namespace RetroSteam
                 ICollection<Shortcut> shortcuts;
                 if (!string.IsNullOrWhiteSpace(o.Input))
                 {
-                    FileStream file = File.OpenRead(o.Input);
+                    FileStream file = System.IO.File.OpenRead(o.Input);
                     // TODO: error checking on file open.
 
                     shortcuts = ReadShortcuts(file);
@@ -104,35 +105,101 @@ namespace RetroSteam
                 {
                     PrintShortcuts(shortcuts);
                 }
-                else if (!string.IsNullOrWhiteSpace(o.Output))
+                else if (string.IsNullOrWhiteSpace(o.Output) || "none".Equals(o.Output))
                 {
-                    FileStream outfile = null;
-                    try
+                    // do nothing
+                }
+                else
+                {
+                    // Anything else is a file or directory
+
+                    // A path with an extension is hopefully a valid path to a file for saving the results
+                    if (Path.HasExtension(o.Output))
                     {
-                        outfile = File.OpenWrite(o.Output);
+                        try
+                        {
+                            string path = Path.GetFullPath(o.Output);
+                            if (path == null) // I feel like this shouldn't happen, since it would throw an exception rather than returning null
+                            {
+                                Console.Error.WriteLine($"The output path '{o.Output}' is null, empty or not a valid windows path.");
+                                return;
+                            }
+                            string filename = Path.GetFileName(path);
+                            string dirname = Path.GetDirectoryName(path);
+                            Directory.CreateDirectory(dirname);
+                            StreamWriter outfile = System.IO.File.CreateText(path);
+
+                            WriteShortcutsFile(shortcuts, outfile);
+                            outfile.Close();
+                        }
+                        catch (System.Security.SecurityException)
+                        {
+                            Console.Error.WriteLine($"Security exception when trying to open file {o.Output} for writing.");
+                            return;
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            Console.Error.WriteLine($"You don't have permission to open file {o.Output} for writing.");
+                            return;
+                        }
+                        catch (ArgumentException)
+                        {
+                            Console.Error.WriteLine($"The output path '{o.Output}' is null, empty or not a valid windows path.");
+                            return;
+                        }
+                        catch (PathTooLongException)
+                        {
+                            Console.Error.WriteLine($"The output path '{o.Output}' is too long.");
+                            return;
+                        }
+                        catch (NotSupportedException e)
+                        {
+                            Console.Error.WriteLine($"Threw NotSupportedException when trying to open file at '{o.Output}', with this message: {e.Message}");
+                            return;
+                        }
                     }
-                    catch (DirectoryNotFoundException)
+                    else // otherwise we're looking at a directoy, where we spit out windows shortcuts
                     {
-                        Console.Error.WriteLine($"The directory of your output file {o.Output} doesn't exist.");
-                        return;
+                        try
+                        {
+                            string path = Path.GetFullPath(o.Output);
+                            if (path == null) // I feel like this shouldn't happen, since it would throw an exception rather than returning null
+                            {
+                                Console.Error.WriteLine($"The output path '{o.Output}' is null, empty or not a valid windows path.");
+                                return;
+                            }
+                            DirectoryInfo dir = Directory.CreateDirectory(path);
+                            MakeWindowsShortcuts(shortcuts, dir);
+                        }
+                        catch (System.Security.SecurityException)
+                        {
+                            Console.Error.WriteLine($"Security exception when trying to write shortcuts to directory '{o.Output}'.");
+                            return;
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            Console.Error.WriteLine($"You don't have permission to access directory '{o.Output}'.");
+                            return;
+                        }
+                        catch (ArgumentException)
+                        {
+                            Console.Error.WriteLine($"The output directory '{o.Output}' is null, empty or not a valid windows path.");
+                            return;
+                        }
+                        catch (PathTooLongException)
+                        {
+                            Console.Error.WriteLine($"The output path '{o.Output}' is too long.");
+                            return;
+                        }
+                        catch (NotSupportedException e)
+                        {
+                            Console.Error.WriteLine($"Threw NotSupportedException when trying to write shortcuts to directory '{o.Output}', with this message: {e.Message}");
+                            return;
+                        }
                     }
-                    catch (FileNotFoundException)
-                    {
-                        Console.Error.WriteLine($"Couldn't open file {o.Output} for writing.");
-                        return;
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        Console.Error.WriteLine($"You don't have permission to open file {o.Output} for writing.");
-                        return;
-                    }
-                    WriteShortcuts(shortcuts, outfile);
-                    outfile.Close();
                 }
             }
         }
-
-
 
         private static void PrintShortcuts(ICollection<Shortcut> shortcuts)
         {
@@ -157,11 +224,39 @@ namespace RetroSteam
             }
         }
 
-        private static void WriteShortcuts(ICollection<Shortcut> shortcuts, FileStream file)
+        private static WshShell shell = new WshShell();
+        private static void CreateShortcut(string path, Shortcut scut)
+        {
+            string category = scut.Categories == null || scut.Categories.Count == 0 ? "" : scut.Categories[0];
+            string title = scut.Title;
+
+            string shortcutAddress = path + Path.DirectorySeparatorChar + $"{title}.lnk";
+
+            IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutAddress);
+            shortcut.Description = $"Launch game '{title}' for platform '{category}'";
+            shortcut.TargetPath = scut.Target;
+            shortcut.Arguments = scut.LaunchOptions;
+            shortcut.WorkingDirectory = scut.StartIn;
+            shortcut.IconLocation = scut.Icon;
+            shortcut.Save();
+        }
+
+        private static void MakeWindowsShortcuts(ICollection<Shortcut> shortcuts, DirectoryInfo dir)
         {
             if (shortcuts != null)
             {
-                StreamWriter outfile = new StreamWriter(file);
+                foreach (Shortcut scut in shortcuts)
+                {
+                    DirectoryInfo catDir = scut.Categories == null || scut.Categories.Count == 0 ? dir : dir.CreateSubdirectory(scut.Categories[0]);
+                    CreateShortcut(catDir.FullName, scut);
+                }
+            }
+        }
+
+        private static void WriteShortcutsFile(ICollection<Shortcut> shortcuts, StreamWriter outfile)
+        {
+            if (shortcuts != null)
+            {
                 string json = JsonConvert.SerializeObject(shortcuts);
                 outfile.Write(json);
                 outfile.Flush();
