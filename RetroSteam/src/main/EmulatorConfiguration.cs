@@ -50,11 +50,14 @@ namespace RetroSteam
                         case "StartIn":       emu.StartIn = config.ExpandVariables(key.Value, emuKeys); break;
                         case "Parameters":    emu.Parameters = config.ExpandVariables(key.Value, emuKeys); break;
                         case "RomBasePath":   emu.RomBasePath = config.ExpandVariables(key.Value, emuKeys);    break;
+                        case "TitlePattern": emu.TitlePattern = config.ExpandVariables(key.Value, emuKeys); break;
                         case "RomRegex":      emu.RomRegex = config.ExpandVariables(key.Value, emuKeys);   break;
                         case "ImageBasePath": emu.ImageBasePath = config.ExpandVariables(key.Value, emuKeys);  break;
-                        case "ImageFile":     emu.ImageFile = config.ExpandVariables(key.Value, emuKeys); break;
-                        case "ImageRegex":    emu.ImageRegex = config.ExpandVariables(key.Value, emuKeys); break;
-                        case "TitlePattern":   emu.TitlePattern = config.ExpandVariables(key.Value, emuKeys); break;
+                        case "ImageFile": emu.ImageFile = config.ExpandVariables(key.Value, emuKeys); break;
+                        case "ImageRegex": emu.ImageRegex = config.ExpandVariables(key.Value, emuKeys); break;
+                        case "IconFile": emu.IconFile = config.ExpandVariables(key.Value, emuKeys); break;
+                        case "IconRegex": emu.IconRegex = config.ExpandVariables(key.Value, emuKeys); break;
+                        case "IconBasePath": emu.IconBasePath = config.ExpandVariables(key.Value, emuKeys); break;
                         default: // Default is to add new key/value pairs for use elsewhere
                             emuKeys[key.KeyName] = config.ExpandVariables(key.Value, emuKeys);
                             break;
