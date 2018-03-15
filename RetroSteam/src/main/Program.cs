@@ -87,6 +87,7 @@ namespace RetroSteam
             {
                 ShowConsole();
                 ConsoleProcessor.Main(emulators, o);
+                Console.WriteLine("Press any key to exit...");
                 Console.ReadKey();
             }
         }
