@@ -8,18 +8,19 @@ namespace RetroSteam
     {
         // Auto-implemented properties
         public string Category { get; internal set; }
+        public string Platform { get; internal set; }
         public string Executable { get; internal set; }
         public string StartIn { get; internal set; }
         public string Parameters { get; internal set; }
-        public string IconBasePath { get; internal set; }
-        public string IconRegex { get; internal set; }
-        public string IconFile { get; internal set; }
-        public string ImageBasePath { get; internal set; }
-        public string ImageRegex { get; internal set; }
-        public string ImageFile { get; internal set; }
         public string RomBasePath { get; internal set; }
         public string RomRegex { get; internal set; }
         public string TitlePattern { get; internal set; }
+        public string IconBasePath { get; internal set; }
+        public string IconRegex { get; internal set; }
+        public string GridBasePath { get; internal set; }
+        public string GridRegex { get; internal set; }
+        public string BoxartBasePath { get; internal set; }
+        public string BoxartRegex { get; internal set; }
 
         internal Emulator()
         {
@@ -50,19 +51,34 @@ namespace RetroSteam
             return Expand(Parameters, romPath);
         }
 
-        internal string ExpandImageBasePath(string romPath)
+        internal string ExpandGridBasePath(string romPath)
         {
-            return Expand(ImageBasePath, romPath);
+            return Expand(GridBasePath, romPath);
         }
 
-        internal string ExpandImageRegex(string romPath)
+        internal string ExpandGridRegex(string romPath)
         {
-            return Expand(ImageRegex, romPath);
+            return Expand(GridRegex, romPath);
         }
 
-        internal string ExpandImageFile(string romPath)
+        internal string ExpandIconBasePath(string romPath)
         {
-            return Expand(ImageFile, romPath);
+            return Expand(IconBasePath, romPath);
+        }
+
+        internal string ExpandIconRegex(string romPath)
+        {
+            return Expand(IconRegex, romPath);
+        }
+
+        internal string ExpandBoxartBasePath(string romPath)
+        {
+            return Expand(BoxartBasePath, romPath);
+        }
+
+        internal string ExpandBoxartRegex(string romPath)
+        {
+            return Expand(BoxartRegex, romPath);
         }
 
         internal string ExpandTitle(string romPath)
@@ -97,28 +113,28 @@ namespace RetroSteam
         private string Expand(string str, string romPath)
         {
             string result = str
-            .Replace("%E", Executable) // %E - Executable path
-            .Replace("%F", Path.GetFileName(Executable)) // %F - Executable filename, no path
-            .Replace("%f", Path.GetFileNameWithoutExtension(Executable)) // %f - Executable filename, no path or extension
-            .Replace("%L", Path.GetDirectoryName(Executable)) // %L - Executable directory, no filename
-            .Replace("%p", GetRelativePath(romPath, Path.GetDirectoryName(Executable))) // %p - rom's path relative to exe, using ../ as necessary
-            .Replace("%R", GetRelativePath(romPath, RomBasePath)) // %R - Rom's path relative to the RomBasePath. Same as %r if there are no subfolders in RomBasePath
-            .Replace("%r", Path.GetFileName(romPath)) // %r - Rom's filename, no path at all
-            .Replace("%n", Path.GetFileNameWithoutExtension(romPath)) // %n - Rom's filename without extension
-            .Replace("%D", GetParentDirectory(romPath)) // %D - Rom's directory, absolute path.
-            .Replace("%d", Path.GetDirectoryName(romPath)) // %d - Rom's parent directory name. Same as RomBasePath if there are no subfolders
-            .Replace("%B", RomBasePath) // %B - RomBasePath, from the emu config
-            .Replace("%C", Category) // %C - Category, from the emu config
+            ?.Replace("%E", Executable) // %E - Executable path
+            ?.Replace("%F", Path.GetFileName(Executable)) // %F - Executable filename, no path
+            ?.Replace("%f", Path.GetFileNameWithoutExtension(Executable)) // %f - Executable filename, no path or extension
+            ?.Replace("%L", Path.GetDirectoryName(Executable)) // %L - Executable directory, no filename
+            ?.Replace("%p", GetRelativePath(romPath, Path.GetDirectoryName(Executable))) // %p - rom's path relative to exe, using ../ as necessary
+            ?.Replace("%R", GetRelativePath(romPath, RomBasePath)) // %R - Rom's path relative to the RomBasePath. Same as %r if there are no subfolders in RomBasePath
+            ?.Replace("%r", Path.GetFileName(romPath)) // %r - Rom's filename, no path at all
+            ?.Replace("%n", Path.GetFileNameWithoutExtension(romPath)) // %n - Rom's filename without extension
+            ?.Replace("%D", GetParentDirectory(romPath)) // %D - Rom's directory, absolute path.
+            ?.Replace("%d", Path.GetDirectoryName(romPath)) // %d - Rom's parent directory name. Same as RomBasePath if there are no subfolders
+            ?.Replace("%B", RomBasePath) // %B - RomBasePath, from the emu config
+            ?.Replace("%C", Category) // %C - Category, from the emu config
             // %I - Image path. Probably won't do this one
             // %i - Icon path. Probably won't do this one
             ;
-
+            
             string romTitle = ParseRomTitle(romPath);
-            result = result.Replace("%T", romTitle); // %T - Rom Title, parsed from RomRegex if a group is included to capture the title from the filename. Default is the same as %n.
+            result = result?.Replace("%T", romTitle); // %T - Rom Title, parsed from RomRegex if a group is included to capture the title from the filename. Default is the same as %n.
 
             // When expanding the rompath, don't honor requests to put a rompath in the rompath
             if (romPath != null)
-                result = result.Replace("%P", romPath); // %P - full rom path and filename
+                result = result?.Replace("%P", romPath); // %P - full rom path and filename
 
             return result;
         }
@@ -132,10 +148,10 @@ namespace RetroSteam
         {
             if (string.IsNullOrWhiteSpace(StartIn))
                 StartIn = Path.GetDirectoryName(Executable);
-            if (string.IsNullOrWhiteSpace(ImageBasePath))
-                ImageBasePath = config.DefaultImagePath;
-            if (string.IsNullOrWhiteSpace(ImageRegex))
-                ImageRegex = config.DefaultImageRegex;
+            if (string.IsNullOrWhiteSpace(GridBasePath))
+                GridBasePath = config.DefaultImagePath;
+            if (string.IsNullOrWhiteSpace(GridRegex))
+                GridRegex = config.DefaultImageRegex;
             if (string.IsNullOrWhiteSpace(RomBasePath))
                 RomBasePath = config.DefaultRomPath;
             if (string.IsNullOrWhiteSpace(RomRegex))

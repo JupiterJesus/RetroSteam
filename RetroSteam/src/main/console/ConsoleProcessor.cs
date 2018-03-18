@@ -168,7 +168,16 @@ namespace RetroSteam
                                 Console.Error.WriteLine($"The output path '{o.Output}' is null, empty or not a valid windows path.");
                                 return;
                             }
-                            DirectoryInfo dir = Directory.CreateDirectory(path);
+                            DirectoryInfo dir = null;
+                            try
+                            {
+                                dir = Directory.CreateDirectory(path);
+                            }
+                            catch (ArgumentException)
+                            {
+                                Console.Error.WriteLine($"The output directory '{o.Output}' is null, empty or not a valid windows path.");
+                                return;
+                            }
                             MakeWindowsShortcuts(shortcuts, dir);
                         }
                         catch (System.Security.SecurityException)
@@ -179,11 +188,6 @@ namespace RetroSteam
                         catch (UnauthorizedAccessException)
                         {
                             Console.Error.WriteLine($"You don't have permission to access directory '{o.Output}'.");
-                            return;
-                        }
-                        catch (ArgumentException)
-                        {
-                            Console.Error.WriteLine($"The output directory '{o.Output}' is null, empty or not a valid windows path.");
                             return;
                         }
                         catch (PathTooLongException)
@@ -234,10 +238,10 @@ namespace RetroSteam
 
             IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutAddress);
             shortcut.Description = $"Launch game '{title}' for platform '{category}'";
-            shortcut.TargetPath = scut.Target;
-            shortcut.Arguments = scut.LaunchOptions;
-            shortcut.WorkingDirectory = scut.StartIn;
-            shortcut.IconLocation = scut.Icon;
+            if (scut.Target != null) shortcut.TargetPath = scut.Target;
+            if (scut.LaunchOptions != null) shortcut.Arguments = scut.LaunchOptions;
+            if (scut.StartIn != null) shortcut.WorkingDirectory = scut.StartIn;
+            if (scut.Icon != null) shortcut.IconLocation = scut.Icon;
             shortcut.Save();
         }
 
@@ -325,31 +329,34 @@ namespace RetroSteam
             string parameters = emulator.ExpandParameters(romPath);
 
             string romName = emulator.ExpandTitle(romPath);
-            string imageBasePath = emulator.ExpandImageBasePath(romPath);
-            string imageRegex = string.IsNullOrWhiteSpace(emulator.ImageRegex) ? null : emulator.ExpandImageRegex(romPath);
-            string imageFile = string.IsNullOrWhiteSpace(emulator.ImageFile) ? null : emulator.ExpandImageFile(romPath);
-            string imagePath = GetImagePath(imageBasePath, imageFile, imageRegex);
+
+            string gridBasePath = emulator.ExpandGridBasePath(romPath);
+            string gridRegex = string.IsNullOrWhiteSpace(emulator.GridRegex) ? null : emulator.ExpandGridRegex(romPath);
+            string gridPath = GetImagePath(gridBasePath, gridRegex);
+
+            string iconBasePath = emulator.ExpandIconBasePath(romPath);
+            string iconRegex = string.IsNullOrWhiteSpace(emulator.IconRegex) ? null : emulator.ExpandIconRegex(romPath);
+            string iconPath = GetImagePath(iconBasePath, iconRegex);
+
+            string boxartBasePath = emulator.ExpandBoxartBasePath(romPath);
+            string boxartRegex = string.IsNullOrWhiteSpace(emulator.BoxartRegex) ? null : emulator.ExpandBoxartRegex(romPath);
+            string boxartPath = GetImagePath(boxartBasePath, gridRegex);
 
             //Console.WriteLine("[" + emulator.Category + "]\nEXE:\t" + emulator.Executable + "\nSTART:\t" + emulator.StartIn + "\nTITLE:\t" + romName + "\nPARAM:\t" + parameters + "\nIMAGE:\t" + imagePath);
 
-            return SteamShortcuts.GenerateShortcut(emulator.Category, romName, emulator.Executable, emulator.StartIn, parameters, imagePath);
+            return SteamShortcuts.GenerateShortcut(emulator.Category, romName, emulator.Executable, emulator.StartIn, parameters, gridPath);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="imageBase"></param>
-        /// <param name="imageFile"></param>
         /// <param name="imageRegex"></param>
         /// <returns></returns>
-        private static string GetImagePath(string imageBase, string imageFile, string imageRegex)
+        private static string GetImagePath(string imageBase,  string imageRegex)
         {
             // First try using a straight file. If that isn't provided, do a regex search on the filesystem
-            if (imageFile != null)
-            {
-                return GetImageByFilename(imageBase, imageFile);
-            }
-            else if (imageRegex != null)
+            if (imageRegex != null)
             {
                 return GetImageByRegex(imageBase, imageRegex);
             }
