@@ -87,8 +87,13 @@ namespace RetroSteam
             {
                 ShowConsole();
                 ConsoleProcessor.Main(emulators, o);
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey();
+                // Pausing after completion is done for when you forced the console on
+                // because the app is set to compile as a windowed app instead of a console app
+                // but when it is, i get no console display even when i force the console to open
+                // using ShowConsole(), and when outputting as a console app I have to press a key
+                // twice. Removing it for now.
+                //Console.WriteLine("Press any key to exit...");
+                //Console.ReadKey();
             }
         }
 
