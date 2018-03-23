@@ -117,7 +117,7 @@ namespace RetroSteam
             ?.Replace("%F", Path.GetFileName(Executable)) // %F - Executable filename, no path
             ?.Replace("%f", Path.GetFileNameWithoutExtension(Executable)) // %f - Executable filename, no path or extension
             ?.Replace("%L", Path.GetDirectoryName(Executable)) // %L - Executable directory, no filename
-            ?.Replace("%p", GetRelativePath(romPath, Path.GetDirectoryName(Executable))) // %p - rom's path relative to exe, using ../ as necessary
+            ?.Replace("%p", GetRelativePath(romPath, StartIn)) // %p - rom's path relative to working directory, using ../ as necessary
             ?.Replace("%R", GetRelativePath(romPath, RomBasePath)) // %R - Rom's path relative to the RomBasePath. Same as %r if there are no subfolders in RomBasePath
             ?.Replace("%r", Path.GetFileName(romPath)) // %r - Rom's filename, no path at all
             ?.Replace("%n", Path.GetFileNameWithoutExtension(romPath)) // %n - Rom's filename without extension
